@@ -1,53 +1,49 @@
 import React, { useState } from "react";
-import Timer from "./Timer";
-import Templates from "./Templates";
-import Settings from "./Settings";
+import Timer from "./components/Timer";
+import Templates from "./components/Templates";
+import Settings from "./components/Settings";
+
+/** Default audio alert file — can be changed or removed as needed. */
 const defaultAlert = "/four.mp3";
 
 const App: React.FC = () => {
-  const [workDuration, setWorkDuration] = useState(40 * 60); // Seconds
-  const [breakDuration, setBreakDuration] = useState(10 * 60); // Seconds
-  const [remainingTime, setRemainingTime] = useState(`${40}:00`); // MM:SS format
+  const [workDuration, setWorkDuration] = useState(40 * 60); // in seconds
+  const [breakDuration, setBreakDuration] = useState(10 * 60);
+  const [remainingTime, setRemainingTime] = useState("40:00"); // MM:SS format
   const [isWorkPhase, setIsWorkPhase] = useState(true);
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
   const [customAudio, setCustomAudio] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Helper to convert seconds to MM:SS format
+  // Helper to convert seconds -> "MM:SS"
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+    const leftoverSeconds = seconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(leftoverSeconds).padStart(2, "0")}`;
   };
 
-  // Play audio alert
+  // Audio alert
   const playAudioAlert = () => {
-    const audio = new Audio(defaultAlert);
+    const audioSrc = customAudio || defaultAlert;
+    const audio = new Audio(audioSrc);
     audio.play().catch((error) => console.error("Error playing audio:", error));
   };
 
-  // Start the timer
+  // Start timer
   const startTimer = () => {
-    if (timer) return; // Prevent multiple timers
-
-    const totalSeconds =
-      parseInt(remainingTime.split(":")[0]) * 60 + parseInt(remainingTime.split(":")[1]);
+    if (timer) return; // don't start if already running
 
     const newTimer = setInterval(() => {
       setRemainingTime((prevTime) => {
-        const [minutes, seconds] = prevTime.split(":").map(Number);
-        const currentSeconds = minutes * 60 + seconds;
+        const [min, sec] = prevTime.split(":").map(Number);
+        const currentSec = min * 60 + sec;
+        // If more than 1 second left, just decrement
+        if (currentSec > 1) return formatTime(currentSec - 1);
 
-        if (currentSeconds > 1) {
-          return formatTime(currentSeconds - 1);
-        }
-
-        // Timer ends
+        // Timer hits 0 — stop and switch phase
         clearInterval(newTimer);
         setTimer(null);
         playAudioAlert();
-
-        // Switch phase
         const nextDuration = isWorkPhase ? breakDuration : workDuration;
         setIsWorkPhase(!isWorkPhase);
         return formatTime(nextDuration);
@@ -57,7 +53,7 @@ const App: React.FC = () => {
     setTimer(newTimer);
   };
 
-  // Pause the timer
+  // Pause timer
   const pauseTimer = () => {
     if (timer) {
       clearInterval(timer);
@@ -65,62 +61,64 @@ const App: React.FC = () => {
     }
   };
 
-  // Reset the timer
+  // Reset timer
   const resetTimer = () => {
-    if (timer) clearInterval(timer);
-    setTimer(null);
+    if (timer) {
+      clearInterval(timer);
+      setTimer(null);
+    }
     setIsWorkPhase(true);
     setRemainingTime(formatTime(workDuration));
   };
 
-  // Save custom settings
+  // Save settings (called from <Settings />)
   const saveSettings = (work: number, breakTime: number) => {
     setWorkDuration(work);
     setBreakDuration(breakTime);
     setRemainingTime(formatTime(work));
-    resetTimer(); // Reset timer when settings are changed
+    resetTimer(); // also reset
   };
 
-  // Handle template selection
+  // Handle template selection (called from <Templates />)
   const selectTemplate = (work: number, breakTime: number) => {
     setWorkDuration(work * 60);
     setBreakDuration(breakTime * 60);
     setRemainingTime(formatTime(work * 60));
-    resetTimer(); // Reset timer when template is selected
+    resetTimer();
   };
 
   return (
-    <div>
-      <h1>Anti-Brainrot Pomodoro Timer</h1>
+      <div className="container">
+        {/* Merged in the "container" class and main heading from HTML */}
+        <h1>Pomodoro Timer</h1>
 
-      {/* Timer Component */}
-      <Timer
-        isWorkPhase={isWorkPhase}
-        remainingTime={remainingTime}
-        onStart={startTimer}
-        onPause={pauseTimer}
-        onReset={resetTimer}
-      />
-
-      {/* Preset Templates */}
-      <Templates onSelectTemplate={selectTemplate} />
-
-      {/* Toggle Button for Settings */}
-      <button
-        onClick={() => setShowSettings(!showSettings)}
-        style={{ marginTop: "20px" }}
-      >
-        {showSettings ? "Hide Settings" : "Show Settings"}
-      </button>
-
-      {/* Conditionally Render Settings */}
-      {showSettings && (
-        <Settings
-          onSaveSettings={saveSettings}
-          onAudioUpload={setCustomAudio}
+        {/* Timer display & controls (handled by Timer component) */}
+        <Timer
+            isWorkPhase={isWorkPhase}
+            remainingTime={remainingTime}
+            onStart={startTimer}
+            onPause={pauseTimer}
+            onReset={resetTimer}
         />
-      )}
-    </div>
+
+        {/* Preset Templates section (handled by Templates component) */}
+        <Templates onSelectTemplate={selectTemplate} />
+
+        {/* Toggle Settings button */}
+        <div id="settings-toggle" className="controls" style={{ marginTop: "20px" }}>
+          <button onClick={() => setShowSettings(!showSettings)}>
+            {showSettings ? "Hide Settings" : "Show Settings"}
+          </button>
+        </div>
+
+        {/* Settings section (handled by Settings component) */}
+        {showSettings && (
+            <Settings
+                onSaveSettings={saveSettings}
+                onAudioUpload={setCustomAudio}
+            />
+        )}
+      </div>
   );
 };
 
