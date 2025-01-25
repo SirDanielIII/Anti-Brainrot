@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "./Button";
 
 interface TimerProps {
     isWorkPhase: boolean;
@@ -22,9 +23,9 @@ const Timer: React.FC<TimerProps> = ({
                 {remainingTime}
             </div>
             <div className="controls">
-                <button onClick={onStart}>Start</button>
-                <button onClick={onPause}>Pause</button>
-                <button onClick={onReset}>Reset</button>
+                <Button label="Start" onClick={() => { console.log("Start clicked"); onStart(); }} />
+                <Button label="Pause" onClick={() => { console.log("Pause clicked"); onPause(); }} />
+                <Button label="Reset" onClick={() => { console.log("Reset clicked"); onReset(); }} />
             </div>
         </div>
     );
