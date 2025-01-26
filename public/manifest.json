@@ -3,6 +3,7 @@
   "name": "Pomodoro Timer Extension",
   "version": "1.0",
   "permissions": ["storage", "notifications", "tabs", "alarms"],
+  "description": "Use the Pomodoro Technique to boost productivity by breaking work into focused intervals with customizable timers.",
   "action": {
     "default_popup": "index.html",
     "default_icon": {

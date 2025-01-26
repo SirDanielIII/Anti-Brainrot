@@ -3,11 +3,10 @@ import {DEFAULT_VALUES} from "./config.ts";
 import Timer from "./components/Timer";
 import Templates from "./components/Templates";
 import Settings from "./components/Settings";
-import ToggleButton from "./components/ToggleButton.tsx";
 import {TIMER} from "./enums/TIMER.ts";
 import {TimerMessage} from "./types/TimerMessage.ts";
-import './styles/App.css'; // Adjust the path if needed
-
+import './styles/App.css';
+import {playSTAHPPrompt} from "./audioUtils.ts"; // Adjust the path if needed
 
 const App: React.FC = () => {
     const [workDuration, setWorkDuration] = useState(DEFAULT_VALUES.workDuration);
@@ -168,28 +167,59 @@ const App: React.FC = () => {
     // Timer handlers
     const startTimer = () => {
         if (timerRunning) return;
+        chrome.notifications.create({
+            type: "basic",
+            iconUrl: "/icon.png",
+            title: "Timer Started",
+            message: "Work timeeeee",
+        });
         updatePersistentValues({timerRunning: true});
         sendMsgToBackground({action: TIMER.START, remainingTime, isWorkPhase});
     };
 
     const pauseTimer = () => {
         if (!timerRunning) return;
+        chrome.notifications.create({
+            type: "basic",
+            iconUrl: "/icon.png",
+            title: "Timer Paused",
+            message: "oop wut happened",
+        });
         updatePersistentValues({timerRunning: false});
         sendMsgToBackground({action: TIMER.PAUSE, remainingTime, isWorkPhase});
     };
 
     const stopTimer = () => {
+        chrome.notifications.create({
+            type: "basic",
+            iconUrl: "/icon.png",
+            title: "Timer Stopped",
+            message: "imagine 🙄",
+        });
         updatePersistentValues({timerRunning: false});
         sendMsgToBackground({action: TIMER.STOP, remainingTime, isWorkPhase});
     };
 
     const skipTimer = () => {
         if (!timerRunning) return;
+        chrome.notifications.create({
+            type: "basic",
+            iconUrl: "/icon.png",
+            title: "Skipped Timer",
+            message: "pu$$y",
+        });
         sendMsgToBackground({action: TIMER.SKIP, remainingTime, isWorkPhase});
     };
 
     const resetSettings = () => {
+        chrome.notifications.create({
+            type: "basic",
+            iconUrl: "/icon.png",
+            title: "Reset All Settings",
+            message: "Now you know what this button does",
+        });
         sendMsgToBackground({action: TIMER.RESET, workDuration, isWorkPhase});
+        playSTAHPPrompt();
     };
     return (
         <div className="container">

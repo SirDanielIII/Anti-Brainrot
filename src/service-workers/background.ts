@@ -56,6 +56,12 @@ const handleAlarm = () => {
 
             if (newRemainingTime <= 0) {
                 if (isWorkPhase) {
+                    chrome.notifications.create({
+                        type: "basic",
+                        iconUrl: "/icon.png",
+                        title: "Break Time!",
+                        message: "You deserve it :)",
+                    });
                     chrome.storage.sync.set({
                         remainingTime: breakDuration,
                         isWorkPhase: false,
@@ -63,6 +69,12 @@ const handleAlarm = () => {
                     });
                 } else {
                     if (loopsCurrent < loops) {
+                        chrome.notifications.create({
+                            type: "basic",
+                            iconUrl: "/icon.png",
+                            title: "NUH UH",
+                            message: "🔫🤬 GET BACK TO WORK ",
+                        });
                         chrome.storage.sync.set({
                             remainingTime: workDuration,
                             isWorkPhase: true,
@@ -70,6 +82,12 @@ const handleAlarm = () => {
                             loopsCurrent: loopsCurrent + 1
                         });
                     } else {
+                        chrome.notifications.create({
+                            type: "basic",
+                            iconUrl: "/icon.png",
+                            title: "YOU DID IT 🥳",
+                            message: "How productive you were 😌",
+                        });
                         // End the session
                         chrome.storage.sync.set({
                             remainingTime: workDuration,
