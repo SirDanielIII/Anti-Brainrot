@@ -1,0 +1,92 @@
+import React, { useState, useEffect } from "react";
+import FaceTracking from "../components/FaceTracker/FaceTracker";
+import GoalsList from "../components/GoalsList";
+
+const WorkMode = () => {
+  const [workDuration, setWorkDuration] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+  const [remainingTime, setRemainingTime] = useState("");
+
+  useEffect(() => {
+    const messageListener = (event) => {
+      if (event.data.type === "TIMER_UPDATE") {
+        setRemainingTime(event.data.time);
+      }
+    };
+
+    // Add the listener
+    window.addEventListener("message", messageListener);
+
+    // Clean up the listener when the component unmounts
+    return () => {
+      window.removeEventListener("message", messageListener);
+    };
+  }, []);
+
+  const handleDurationChange = (e) => {
+    setWorkDuration(e.target.value);
+  };
+
+  const startWorkSession = (e) => {
+    e.preventDefault();
+    setIsWorking(true);
+    setRemainingTime(`${workDuration}:00`);
+  };
+
+  return (
+    <div className="flex h-screen">
+      {/* Left column: Goals List */}
+      <div className="w-1/3 p-5 bg-gray-100 overflow-y-auto">
+        <h2 className="text-2xl font-semibold mb-4">Your Goals</h2>
+        <GoalsList />
+      </div>
+
+      {/* Right column: Work Session / Face Tracking */}
+      <div className="w-2/3 p-5 bg-white overflow-y-auto">
+        <h1 className="text-3xl font-bold mb-5">Work Mode</h1>
+        <p className="mb-10">Set your work duration and stay focused!</p>
+
+        {!isWorking ? (
+          <div className="bg-gray-100 p-5 rounded-lg mb-10">
+            <h2 className="text-2xl font-semibold mb-4">Set Work Duration</h2>
+            <form onSubmit={startWorkSession}>
+              <div className="form-group mb-4">
+                <label
+                  htmlFor="duration"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Work Duration (minutes)
+                </label>
+                <input
+                  type="number"
+                  id="duration"
+                  value={workDuration}
+                  onChange={handleDurationChange}
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                  required
+                  min="1"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
+              >
+                Start Work Session
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="bg-gray-100 p-5 rounded-lg mb-10">
+            <h2 className="text-2xl font-semibold mb-4">
+              Work Session in Progress
+            </h2>
+            <p className="mb-4">Time remaining: {remainingTime || `${workDuration}:00`}</p>
+            <FaceTracking />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default WorkMode;
