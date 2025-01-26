@@ -2,16 +2,12 @@
   "manifest_version": 3,
   "name": "Pomodoro Timer Extension",
   "version": "1.0",
-  "permissions": ["storage", "notifications", "tabs", "alarms"],
-  "content_scripts": [
-    {
-      "matches": ["http://localhost:3001/*"],
-      "js": ["content-script.js"]
-    }
+  "permissions": [
+    "storage",
+    "notifications",
+    "tabs",
+    "alarms"
   ],
-  "background": {
-    "service_worker": "background.js"
-  },
   "action": {
     "default_popup": "index.html",
     "default_icon": {
@@ -24,5 +20,14 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3001/*"
+    ]
   }
 }

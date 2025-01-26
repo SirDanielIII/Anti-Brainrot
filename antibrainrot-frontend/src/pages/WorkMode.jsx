@@ -1,3 +1,4 @@
+/*global chrome*/
 import React, { useState, useEffect } from "react";
 import FaceTracking from "../components/FaceTracker/FaceTracker";
 import GoalsList from "../components/GoalsList";
@@ -33,9 +34,28 @@ const WorkMode = () => {
 
   // Function to send messages to Chrome runtime
   const sendMessageToChrome = (message) => {
-    chrome.runtime.sendMessage(message, (response) => {
-      console.log("Response from Chrome extension:", response);
-    });
+    if (chrome && chrome.runtime) {
+      const editorExtensionId = 'lpknkabkcapedcdneapbkfabjgbbemeh';
+      console.log('Checking if extension is installed...');
+      let isLookingAway = message.type === "USER_LOOKING_AWAY";
+      console.log(isLookingAway);
+      console.log(message);
+      chrome.runtime.sendMessage(
+        editorExtensionId,
+        {
+          message: 'ping',
+          isLookingAway: isLookingAway,
+        },
+        (response) => {
+          if (response) {
+            console.log('Extension is installed!');
+            console.log(response?.message);
+          } else {
+            console.log('Extension is not installed!');
+          }
+        }
+      );
+    };
   };
 
   return (

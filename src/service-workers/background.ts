@@ -126,3 +126,14 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         );
     }
 });
+
+chrome.runtime.onMessageExternal.addListener(
+    function (request, sender, sendResponse) {
+        if (request?.message.length > 0) {
+            console.log(request.message);
+            let isLookingAway = request.isLookingAway ? true : false;
+            chrome.storage.sync.set({ isLookingAway: isLookingAway })
+            sendResponse({ message: "goodbye" });
+            console.log(isLookingAway);
+        }
+    });
