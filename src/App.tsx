@@ -8,6 +8,17 @@ import {TimerMessage} from "./types/TimerMessage.ts";
 
 /** Default audio alert file — can be changed or removed as needed. */
 const audioCompleteDefault = "/audio/four.mp3";
+let stateSetters: {
+    workDuration: React.Dispatch<React.SetStateAction<number>>;
+    breakDuration: React.Dispatch<React.SetStateAction<number>>;
+    remainingTime: React.Dispatch<React.SetStateAction<string>>;
+    isWorkPhase: React.Dispatch<React.SetStateAction<boolean>>;
+    timerRunning: React.Dispatch<React.SetStateAction<boolean>>;
+    audioComplete: React.Dispatch<React.SetStateAction<string | null>>;
+    audioDistracted: React.Dispatch<React.SetStateAction<string | null>>;
+    audioDistractedPrompt: React.Dispatch<React.SetStateAction<string | null>>;
+    showSettings: React.Dispatch<React.SetStateAction<boolean>>;
+} | null = null;
 
 const App: React.FC = () => {
     const [workDuration, setWorkDuration] = useState(40 * 60); // 40 minutes
@@ -22,6 +33,7 @@ const App: React.FC = () => {
 
     // Fetch initial values from chrome.storage.sync
     useEffect(() => {
+        console.log("Fetching values from chrome.storage.sync to React variables");
         chrome.storage.sync.get(
             [
                 "workDuration",
@@ -47,28 +59,8 @@ const App: React.FC = () => {
             }
         );
 
-        const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
-            for (const [key, {newValue}] of Object.entries(changes)) {
-                updatePersistentValue(key as keyof typeof stateSetters, newValue);
-            }
-        };
-
-        chrome.storage.onChanged.addListener(handleStorageChange);
-        return () => chrome.storage.onChanged.removeListener(handleStorageChange);
-    }, []);
-
-    // Helper to convert seconds -> "MM:SS"
-    const formatTime = (seconds: number) => {
-        const minutes = Math.floor(seconds / 60);
-        const leftoverSeconds = seconds % 60;
-        return `${String(minutes).padStart(2, "0")}:${String(leftoverSeconds).padStart(2, "0")}`;
-    };
-
-    // Debounced persistent storage updater
-    const updatePersistentValue = (key, value) => {
-        chrome.storage.sync.set({[key]: value});
-
-        const stateSetters = {
+        // Assuming you still need access to these setters somewhere in your component:
+        stateSetters = {
             workDuration: setWorkDuration,
             breakDuration: setBreakDuration,
             remainingTime: setRemainingTime,
@@ -79,11 +71,33 @@ const App: React.FC = () => {
             audioDistractedPrompt: setAudioDistractedPrompt,
             showSettings: setShowSettings,
         };
+        return;
+    }, []);
 
-        if (stateSetters[key]) {
-            stateSetters[key](value);
-        }
-    }
+    // Helper to convert seconds -> "MM:SS"
+    const formatTime = (seconds: number) => {
+        const minutes = Math.floor(seconds / 60);
+        const leftoverSeconds = seconds % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(leftoverSeconds).padStart(2, "0")}`;
+    };
+
+    /**
+     * Update multiple persistent values at once.
+     *
+     * @param {Object} updates - An object containing key-value pairs to update.
+     *   For example: { workDuration: 25, breakDuration: 5 }
+     */
+    const updatePersistentValues = (updates: ArrayLike<unknown> | Partial<{ [key: string]: any; }>) => {
+        // 1) Update React state first
+        Object.entries(updates).forEach(([key, value]) => {
+            if (stateSetters[key]) {
+                stateSetters[key](value);
+            }
+        });
+
+        // 2) Update chrome storage (asynchronously)
+        chrome.storage.sync.set(updates);
+    };
 
     // Audio alert
     const playAudioAlert = () => {
@@ -106,7 +120,7 @@ const App: React.FC = () => {
         console.log("Pressed start button")
 
         if (timerRunning) return;
-        updatePersistentValue("timerRunning", true);
+        updatePersistentValues({timerRunning: true});
         sendMsgToBackground({
             action: TIMER.START,
             remainingTime,
@@ -117,7 +131,7 @@ const App: React.FC = () => {
     const pauseTimer = () => {
         console.log("Pressed pause button")
         if (!timerRunning) return;
-        updatePersistentValue("timerRunning", false);
+        updatePersistentValues({timerRunning: false});
         sendMsgToBackground({
             action: TIMER.PAUSE,
             remainingTime,
@@ -127,9 +141,18 @@ const App: React.FC = () => {
 
     const resetTimer = () => {
         console.log("Pressed reset button")
-        updatePersistentValue("timerRunning", false);
-        updatePersistentValue("remainingTime", formatTime(workDuration));
-        updatePersistentValue("isWorkPhase", true);
+        // Define the default values
+        updatePersistentValues({
+            workDuration: 40 * 60,
+            breakDuration: 10 * 60,
+            remainingTime: "40:00",
+            isWorkPhase: true,
+            timerRunning: true,
+            alarmFinished: undefined,
+            alarmDistraction: undefined,
+            alarmDistractionPrompt: undefined,
+            showSettings: false
+        });
         sendMsgToBackground({
             action: TIMER.RESET,
             remainingTime,
@@ -149,24 +172,22 @@ const App: React.FC = () => {
             />
             <Templates
                 onSelectTemplate={(workTime, breakTime) => {
-                    updatePersistentValue("workDuration", workTime * 60);
-                    updatePersistentValue("breakDuration", breakTime * 60);
+                    updatePersistentValues({workDuration: workTime * 60, breakDuration: breakTime * 60, remainingTime: formatTime(workTime * 60)});
                 }}
             />
             <ToggleButton
                 label="Toggle Settings"
                 onClick={() => {
-                    updatePersistentValue("showSettings", !showSettings);
+                    updatePersistentValues({showSettings: !showSettings});
                 }}
             />
             {showSettings && (
                 <Settings
                     onSaveSettings={(workTime, breakTime) => {
-                        updatePersistentValue("workDuration", workTime);
-                        updatePersistentValue("breakDuration", breakTime);
+                        updatePersistentValues({workDuration: workTime, breakDuration: breakTime, remainingTime: formatTime(workTime)});
                     }}
                     onAudioUpload={(audioFile) => {
-                        updatePersistentValue("audioComplete", audioFile);
+                        updatePersistentValues({audioComplete: audioFile});
                     }}
                 />
             )}
