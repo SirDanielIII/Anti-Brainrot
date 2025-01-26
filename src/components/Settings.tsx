@@ -3,10 +3,9 @@ import Button from "./Button";
 
 interface SettingsProps {
     onSaveSettings: (work: number, breakTime: number, loopsCount: number) => void;
-    onAudioUpload: (audioFile: string | null) => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ onSaveSettings, onAudioUpload }) => {
+const Settings: React.FC<SettingsProps> = ({ onSaveSettings }) => {
     const [workInput, setWorkInput] = useState<string>(""); // Start as an empty string
     const [breakInput, setBreakInput] = useState<string>(""); // Start as an empty string
     const [loopsInput, setLoopsInput] = useState<string>(""); // Start as an empty string
@@ -41,15 +40,6 @@ const Settings: React.FC<SettingsProps> = ({ onSaveSettings, onAudioUpload }) =>
 
         console.log("Saving settings:", { workDuration, breakDuration, loopsCount });
         onSaveSettings(workDuration * 60, breakDuration * 60, loopsCount);
-    };
-
-    const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const audioUrl = URL.createObjectURL(file);
-            console.log("Uploading audio:", audioUrl);
-            onAudioUpload(audioUrl);
-        }
     };
 
     return (
@@ -87,11 +77,6 @@ const Settings: React.FC<SettingsProps> = ({ onSaveSettings, onAudioUpload }) =>
             <br />
             {error && <p style={{ color: "red" }}>{error}</p>} {/* Display error message */}
             <Button label="Save" onClick={handleSave} />
-            <br />
-            <label>
-                Upload Custom Audio:
-                <input type="file" onChange={handleAudioChange} accept="audio/*" />
-            </label>
         </div>
     );
 };

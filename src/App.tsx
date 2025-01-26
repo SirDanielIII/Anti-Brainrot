@@ -7,16 +7,12 @@ import ToggleButton from "./components/ToggleButton.tsx";
 import {TIMER} from "./enums/TIMER.ts";
 import {TimerMessage} from "./types/TimerMessage.ts";
 
-/** Default audio alert file — can be changed or removed as needed. */
-const AUDIO_COMPLETE_DEFAULT = "/audio/four.mp3";
-
 const App: React.FC = () => {
     const [workDuration, setWorkDuration] = useState(DEFAULT_VALUES.workDuration);
     const [breakDuration, setBreakDuration] = useState(DEFAULT_VALUES.breakDuration);
     const [remainingTime, setRemainingTime] = useState(DEFAULT_VALUES.remainingTime);
     const [isWorkPhase, setIsWorkPhase] = useState(DEFAULT_VALUES.isWorkPhase);
     const [timerRunning, setTimerRunning] = useState(DEFAULT_VALUES.timerRunning);
-    const [audioComplete, setAudioComplete] = useState(DEFAULT_VALUES.audioComplete);
     const [showSettings, setShowSettings] = useState(DEFAULT_VALUES.showSettings);
     const [loops, setLoops] = useState(DEFAULT_VALUES.loops);
     const [loopsCurrent, setLoopsCurrent] = useState(DEFAULT_VALUES.loopsCurrent);
@@ -30,34 +26,33 @@ const App: React.FC = () => {
                 "remainingTime",
                 "isWorkPhase",
                 "timerRunning",
-                "audioComplete",
                 "showSettings",
+                "loops",
+                "loopsCurrent",
             ],
-            ({
-                 workDuration,
-                 breakDuration,
-                 remainingTime,
-                 isWorkPhase,
-                 timerRunning,
-                 audioComplete,
-                 showSettings,
-                 loops,
-                 loopsCurrent,
-             }) => {
-                if (typeof workDuration === "number") setWorkDuration(workDuration);
-                if (typeof breakDuration === "number") setBreakDuration(breakDuration);
-                if (typeof remainingTime === "number") setRemainingTime(remainingTime);
-                if (typeof isWorkPhase === "boolean") setIsWorkPhase(isWorkPhase);
-                if (typeof timerRunning === "boolean") setTimerRunning(timerRunning);
-                if (typeof audioComplete === "string") setAudioComplete(audioComplete);
-                if (typeof showSettings === "boolean") setShowSettings(showSettings);
-                if (typeof showSettings === "boolean") setShowSettings(showSettings);
-                if (typeof showSettings === "boolean") setShowSettings(showSettings);
-                if (typeof loops === "number") setLoops(loops);
-                if (typeof loopsCurrent === "number") setLoopsCurrent(loopsCurrent);
+            (data) => {
+                // Mapping keys to their respective state setters
+                const stateSetters: Record<string, (value: any) => void> = {
+                    workDuration: setWorkDuration,
+                    breakDuration: setBreakDuration,
+                    remainingTime: setRemainingTime,
+                    isWorkPhase: setIsWorkPhase,
+                    timerRunning: setTimerRunning,
+                    showSettings: setShowSettings,
+                    loops: setLoops,
+                    loopsCurrent: setLoopsCurrent,
+                };
+
+                // Dynamically update state for valid data
+                Object.entries(data).forEach(([key, value]) => {
+                    if (key in stateSetters && value !== undefined) {
+                        stateSetters[key](value);
+                    }
+                });
             }
         );
     }, []);
+
     useEffect(() => {
         const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
             if (areaName === "sync") {
@@ -77,9 +72,6 @@ const App: React.FC = () => {
                             break;
                         case "timerRunning":
                             if (typeof newValue === "boolean") setTimerRunning(newValue);
-                            break;
-                        case "audioComplete":
-                            if (typeof newValue === "string") setAudioComplete(newValue);
                             break;
                         case "showSettings":
                             if (typeof newValue === "boolean") setShowSettings(newValue);
@@ -145,9 +137,6 @@ const App: React.FC = () => {
                 case "timerRunning":
                     setTimerRunning(value);
                     break;
-                case "audioComplete":
-                    setAudioComplete(value);
-                    break;
                 case "showSettings":
                     setShowSettings(value);
                     break;
@@ -161,17 +150,9 @@ const App: React.FC = () => {
                     console.warn(`Unrecognized key: ${key}`);
             }
         });
-
         // Update chrome storage (asynchronously)
-        chrome.storage.sync.set(updates);
-    };
-
-    // Play audio alert (if set, otherwise default)
-    const playAudioAlert = () => {
-        const audioSrc = audioComplete ?? AUDIO_COMPLETE_DEFAULT;
-        const audio = new Audio(audioSrc);
-        audio.play().catch((error) => {
-            console.error("Error playing audio:", error);
+        chrome.storage.sync.set(updates, () => {
+            console.log("Updated chrome.storage.sync with:", updates);
         });
     };
 
@@ -195,7 +176,6 @@ const App: React.FC = () => {
         sendMsgToBackground({action: TIMER.PAUSE, remainingTime, isWorkPhase});
     };
 
-
     const stopTimer = () => {
         updatePersistentValues({timerRunning: false});
         sendMsgToBackground({action: TIMER.STOP, remainingTime, isWorkPhase});
@@ -207,15 +187,7 @@ const App: React.FC = () => {
     };
 
     const resetSettings = () => {
-        updatePersistentValues({
-            workDuration: DEFAULT_VALUES.workDuration,
-            breakDuration: DEFAULT_VALUES.breakDuration,
-            remainingTime: DEFAULT_VALUES.remainingTime,
-            isWorkPhase: DEFAULT_VALUES.isWorkPhase,
-            timerRunning: DEFAULT_VALUES.timerRunning,
-            audioComplete: DEFAULT_VALUES.audioComplete || null, // if you still need to clear this in storage
-        });
-        sendMsgToBackground({action: TIMER.RESET, DEFAULT_WORK_DURATION, isWorkPhase});
+        sendMsgToBackground({action: TIMER.RESET, workDuration, isWorkPhase});
     };
     return (
         <div className="container">
@@ -250,7 +222,6 @@ const App: React.FC = () => {
             {showSettings && (
                 <Settings
                     onSaveSettings={(workTime, breakTime, loopsCount) => {
-
                         if (!timerRunning) {
                             updatePersistentValues({
                                 workDuration: workTime,
@@ -258,11 +229,6 @@ const App: React.FC = () => {
                                 remainingTime: workTime,
                                 loops: loopsCount,
                             });
-                        }
-                    }}
-                    onAudioUpload={(audioFile) => {
-                        if (!timerRunning) {
-                            updatePersistentValues({audioComplete: audioFile});
                         }
                     }}
                 />

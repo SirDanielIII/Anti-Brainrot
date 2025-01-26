@@ -5,7 +5,6 @@ export const DEFAULT_VALUES = {
     remainingTime: 40 * 60, // Initial remaining time
     isWorkPhase: true,
     timerRunning: false,
-    audioComplete: "",
     showSettings: false,
     loops: 3,
     loopsCurrent: 1,
