@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import Button from "./Button";
+import '../styles/App.css'; // Adjust the path if needed
 
 interface SettingsProps {
     onSaveSettings: (work: number, breakTime: number, loopsCount: number) => void;
@@ -43,7 +44,7 @@ const Settings: React.FC<SettingsProps> = ({ onSaveSettings }) => {
     };
 
     return (
-        <div>
+        <div className="settings">
             <h2>Settings</h2>
             <label>
                 Work Duration (minutes):
@@ -75,9 +76,10 @@ const Settings: React.FC<SettingsProps> = ({ onSaveSettings }) => {
                 />
             </label>
             <br />
-            {error && <p style={{ color: "red" }}>{error}</p>} {/* Display error message */}
+            {error && <p className="error-message">{error}</p>} {/* Display error message */}
             <Button label="Save" onClick={handleSave} />
         </div>
+
     );
 };
 
