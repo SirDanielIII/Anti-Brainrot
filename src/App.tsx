@@ -6,6 +6,7 @@ import Settings from "./components/Settings";
 import ToggleButton from "./components/ToggleButton.tsx";
 import {TIMER} from "./enums/TIMER.ts";
 import {TimerMessage} from "./types/TimerMessage.ts";
+import './styles/styles.css';
 
 const App: React.FC = () => {
     const [workDuration, setWorkDuration] = useState(DEFAULT_VALUES.workDuration);
