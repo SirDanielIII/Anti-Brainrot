@@ -7,6 +7,7 @@ interface TimerProps {
     onStart: () => void;
     onPause: () => void;
     onStop: () => void;
+    onSkip: () => void;
     onReset: () => void;
 }
 
@@ -16,6 +17,7 @@ const Timer: React.FC<TimerProps> = ({
                                          onStart,
                                          onPause,
                                          onStop,
+                                         onSkip,
                                          onReset,
                                      }) => {
     return (
@@ -33,6 +35,9 @@ const Timer: React.FC<TimerProps> = ({
                 }}/>
                 <Button label="Stop" onClick={() => {
                     onStop();
+                }}/>
+                <Button label="Skip" onClick={() => {
+                    onSkip();
                 }}/>
                 <Button label="Reset" onClick={() => {
                     onReset();

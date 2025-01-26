@@ -53,6 +53,12 @@ const stopTimer = () => {
     });
 };
 
+const skipTimer = () => {
+    chrome.storage.sync.set({
+        remainingTime: 0,
+    });
+};
+
 const resetTimer = () => {
     chrome.alarms.clear("alarmGoBrrrr", (wasCleared) => {
         if (wasCleared) console.log("Timer reset.");
@@ -71,7 +77,7 @@ const handleAlarm = () => {
 
             const newRemainingTime = remainingTime - 1;
 
-            if (newRemainingTime < 0) {
+            if (newRemainingTime <= 0) {
                 if (isWorkPhase) {
                     chrome.storage.sync.set({
                         remainingTime: breakDuration,
@@ -112,6 +118,9 @@ chrome.runtime.onMessage.addListener((request: TimerMessage, _sender, sendRespon
             break;
         case TIMER.STOP:
             stopTimer();
+            break;
+        case TIMER.SKIP:
+            skipTimer();
             break;
         case TIMER.RESET:
             resetTimer();

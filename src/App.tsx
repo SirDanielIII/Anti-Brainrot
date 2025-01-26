@@ -184,6 +184,11 @@ const App: React.FC = () => {
         sendMsgToBackground({action: TIMER.STOP, remainingTime, isWorkPhase});
     };
 
+    const skipTimer = () => {
+        if (!timerRunning) return;
+        sendMsgToBackground({action: TIMER.SKIP, remainingTime, isWorkPhase});
+    };
+
     const resetSettings = () => {
         updatePersistentValues({
             workDuration: DEFAULT_WORK_DURATION,
@@ -205,6 +210,7 @@ const App: React.FC = () => {
                 onStart={startTimer}
                 onPause={pauseTimer}
                 onStop={stopTimer}
+                onSkip={skipTimer}
                 onReset={resetSettings}
             />
 

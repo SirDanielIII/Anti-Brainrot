@@ -3,6 +3,7 @@ export enum TIMER {
     START = "start",
     PAUSE = "pause",
     STOP = "stop",
+    SKIP = "skip",
     RESET = "reset",
 }
 
