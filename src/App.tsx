@@ -23,7 +23,6 @@ const App: React.FC = () => {
 
     // Fetch initial values from chrome.storage.sync
     useEffect(() => {
-        console.log("Fetching values from chrome.storage.sync");
         chrome.storage.sync.get(
             [
                 "workDuration",
@@ -53,37 +52,45 @@ const App: React.FC = () => {
             }
         );
     }, []);
-
     useEffect(() => {
-        const messageListener = (message: { action: string; newRemainingTime?: number, isWorkPhase?: boolean }) => {
-            if (message.action === "UPDATE_REMAINING_TIME") {
-                console.log("Received new remaining time:", message.newRemainingTime);
-                setRemainingTime(message.newRemainingTime);
-                setIsWorkPhase(message.isWorkPhase);
+        const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+            if (areaName === "sync") {
+                Object.entries(changes).forEach(([key, {newValue}]) => {
+                    switch (key) {
+                        case "workDuration":
+                            if (typeof newValue === "number") setWorkDuration(newValue);
+                            break;
+                        case "breakDuration":
+                            if (typeof newValue === "number") setBreakDuration(newValue);
+                            break;
+                        case "remainingTime":
+                            if (typeof newValue === "number") setRemainingTime(newValue);
+                            break;
+                        case "isWorkPhase":
+                            if (typeof newValue === "boolean") setIsWorkPhase(newValue);
+                            break;
+                        case "timerRunning":
+                            if (typeof newValue === "boolean") setTimerRunning(newValue);
+                            break;
+                        case "audioComplete":
+                            if (typeof newValue === "string") setAudioComplete(newValue);
+                            break;
+                        case "showSettings":
+                            if (typeof newValue === "boolean") setShowSettings(newValue);
+                            break;
+                        default:
+                            console.warn(`Unhandled storage key change: ${key}`);
+                    }
+                });
             }
         };
 
-        chrome.runtime.onMessage.addListener(messageListener);
+        // Add the listener for storage changes
+        chrome.storage.onChanged.addListener(handleStorageChange);
 
+        // Clean up the listener on component unmount
         return () => {
-            chrome.runtime.onMessage.removeListener(messageListener);
-        };
-    }, []);
-
-
-    useEffect(() => { // Runs everytime values are updated
-        const messageListener = (message: { action: string; remainingTime, isWorkPhase, timerRunning, workDuration, breakDuration }) => {
-            if (message.action === "UPDATE_VALUES") {
-
-            }
-        };
-
-        // Add the listener for messages from the background script
-        chrome.runtime.onMessage.addListener(messageListener);
-
-        // Clean up the listener when the component is unmounted
-        return () => {
-            chrome.runtime.onMessage.removeListener(messageListener);
+            chrome.storage.onChanged.removeListener(handleStorageChange);
         };
     }, []);
     /**
@@ -160,20 +167,24 @@ const App: React.FC = () => {
     // Timer handlers
     const startTimer = () => {
         if (timerRunning) return;
-        console.log("Start timer");
         updatePersistentValues({timerRunning: true});
         sendMsgToBackground({action: TIMER.START, remainingTime, isWorkPhase});
     };
 
     const pauseTimer = () => {
         if (!timerRunning) return;
-        console.log("Pause timer");
         updatePersistentValues({timerRunning: false});
         sendMsgToBackground({action: TIMER.PAUSE, remainingTime, isWorkPhase});
     };
 
+
+    const stopTimer = () => {
+        if (!timerRunning) return;
+        updatePersistentValues({timerRunning: false});
+        sendMsgToBackground({action: TIMER.STOP, remainingTime, isWorkPhase});
+    };
+
     const resetSettings = () => {
-        console.log("Reset timer");
         updatePersistentValues({
             workDuration: DEFAULT_WORK_DURATION,
             breakDuration: DEFAULT_BREAK_DURATION,
@@ -193,6 +204,7 @@ const App: React.FC = () => {
                 remainingTime={formatTime(remainingTime)}
                 onStart={startTimer}
                 onPause={pauseTimer}
+                onStop={stopTimer}
                 onReset={resetSettings}
             />
 
