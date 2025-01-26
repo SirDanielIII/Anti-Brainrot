@@ -4,7 +4,7 @@ import useFaceMesh from "./useFaceMesh";
 import VideoDisplay from "./VideoDisplay";
 import AttentionModal from "./AttentionModal";
 
-const FaceTracker = () => {
+const FaceTracker = ({ sendMessageToChrome }) => {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -21,14 +21,14 @@ const FaceTracker = () => {
     setCanvasSize(canvasRef.current, 640, 480);
   }, [setCanvasSize]);
 
-  // In FaceTracking.jsx
+  // Messaging logic
   useEffect(() => {
     if (isLookingAway) {
-      window.postMessage({ type: "USER_LOOKING_AWAY" }, "*");
+      sendMessageToChrome({ type: "USER_LOOKING_AWAY" });
     } else {
-      window.postMessage({ type: "USER_BACK" }, "*");
+      sendMessageToChrome({ type: "USER_BACK" });
     }
-  }, [isLookingAway]);
+  }, [isLookingAway, sendMessageToChrome]);
 
   return (
     <div
@@ -36,7 +36,6 @@ const FaceTracker = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        // No explicit width/height here
         margin: 0,
         padding: 0,
         backgroundColor: "#f0f0f0",

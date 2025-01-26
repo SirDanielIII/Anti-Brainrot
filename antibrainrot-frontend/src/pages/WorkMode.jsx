@@ -14,10 +14,8 @@ const WorkMode = () => {
       }
     };
 
-    // Add the listener
     window.addEventListener("message", messageListener);
 
-    // Clean up the listener when the component unmounts
     return () => {
       window.removeEventListener("message", messageListener);
     };
@@ -33,15 +31,20 @@ const WorkMode = () => {
     setRemainingTime(`${workDuration}:00`);
   };
 
+  // Function to send messages to Chrome runtime
+  const sendMessageToChrome = (message) => {
+    chrome.runtime.sendMessage(message, (response) => {
+      console.log("Response from Chrome extension:", response);
+    });
+  };
+
   return (
     <div className="flex h-screen">
-      {/* Left column: Goals List */}
       <div className="w-1/3 p-5 bg-gray-100 overflow-y-auto">
         <h2 className="text-2xl font-semibold mb-4">Your Goals</h2>
         <GoalsList />
       </div>
 
-      {/* Right column: Work Session / Face Tracking */}
       <div className="w-2/3 p-5 bg-white overflow-y-auto">
         <h1 className="text-3xl font-bold mb-5">Work Mode</h1>
         <p className="mb-10">Set your work duration and stay focused!</p>
@@ -80,8 +83,10 @@ const WorkMode = () => {
             <h2 className="text-2xl font-semibold mb-4">
               Work Session in Progress
             </h2>
-            <p className="mb-4">Time remaining: {remainingTime || `${workDuration}:00`}</p>
-            <FaceTracking />
+            <p className="mb-4">
+              Time remaining: {remainingTime || `${workDuration}:00`}
+            </p>
+            <FaceTracking sendMessageToChrome={sendMessageToChrome} />
           </div>
         )}
       </div>
