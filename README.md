@@ -1,6 +1,6 @@
-# Anti-Brainrot
+# Pomolock-in 💯
 
-WE DESTROYING BRAINROT WITH THIS ONE 🗣️🗣️🗣️💯💯💯
+We slaved ourselves for 36h to help you to **LOCK THE F*CK IN** (with our beautifuly made Chrome extension).
 
 ---
 

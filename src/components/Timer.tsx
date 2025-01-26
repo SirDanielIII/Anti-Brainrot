@@ -6,6 +6,8 @@ interface TimerProps {
     remainingTime: string;
     onStart: () => void;
     onPause: () => void;
+    onStop: () => void;
+    onSkip: () => void;
     onReset: () => void;
 }
 
@@ -14,6 +16,8 @@ const Timer: React.FC<TimerProps> = ({
                                          remainingTime,
                                          onStart,
                                          onPause,
+                                         onStop,
+                                         onSkip,
                                          onReset,
                                      }) => {
     return (
@@ -23,9 +27,21 @@ const Timer: React.FC<TimerProps> = ({
                 {remainingTime}
             </div>
             <div className="controls">
-                <Button label="Start" onClick={() => { console.log("Start clicked"); onStart(); }} />
-                <Button label="Pause" onClick={() => { console.log("Pause clicked"); onPause(); }} />
-                <Button label="Reset" onClick={() => { console.log("Reset clicked"); onReset(); }} />
+                <Button label="Start" onClick={() => {
+                    onStart();
+                }}/>
+                <Button label="Pause" onClick={() => {
+                    onPause();
+                }}/>
+                <Button label="Stop" onClick={() => {
+                    onStop();
+                }}/>
+                <Button label="Skip" onClick={() => {
+                    onSkip();
+                }}/>
+                <Button label="Reset" onClick={() => {
+                    onReset();
+                }}/>
             </div>
         </div>
     );
