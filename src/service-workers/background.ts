@@ -68,6 +68,65 @@ chrome.runtime.onMessage.addListener(
     }
 );
 
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === "alarmGoBrrrr") {
+        chrome.storage.sync.get(
+            ["remainingTime", "isWorkPhase", "timerRunning", "workDuration", "breakDuration"],
+            (storedValues) => {
+                const {remainingTime, isWorkPhase, timerRunning, workDuration, breakDuration} = storedValues;
+
+                if (timerRunning) {
+                    const newRemainingTime = remainingTime - 1;
+                    if (newRemainingTime < 0) {
+                        if (isWorkPhase) {
+                            chrome.storage.sync.set({
+                                remainingTime: breakDuration,
+                                isWorkPhase: false,
+                                timerRunning: true,
+                            });
+                        } else {
+                            chrome.storage.sync.set({
+                                remainingTime: workDuration,
+                                isWorkPhase: true,
+                                timerRunning: false,
+                            });
+                            chrome.alarms.clear("alarmGoBrrrr", (wasCleared) => {
+                                if (wasCleared) {
+                                    console.log("Alarm stopped!");
+                                } else {
+                                    console.log("Failed to stop the alarm");
+                                }
+                            });
+                        }
+                        // *********************************************************************
+                        // RUN ANY LOGIC THAT NEEDS TO BE RAN DURING THE 1 SEC ALARM LOOP HERE
+                        // *********************************************************************
+
+
+                    } else {
+                        // Send updated values to App.tsx
+                        chrome.storage.sync.set({remainingTime: newRemainingTime, isWorkPhase: isWorkPhase});
+                        // Handle message errors gracefully
+                        chrome.runtime.sendMessage(
+                            {action: "UPDATE_REMAINING_TIME", newRemainingTime, isWorkPhase},
+                            (response) => {
+                                if (chrome.runtime.lastError) {
+                                    console.warn(
+                                        "No active listeners to receive message:",
+                                        chrome.runtime.lastError.message
+                                    );
+                                } else {
+                                    console.log("Message sent successfully:", response);
+                                }
+                            }
+                        );
+                    }
+                }
+            }
+        );
+    }
+});
+
 chrome.runtime.onMessageExternal.addListener(
     function (request, sender, sendResponse) {
         if (request?.message.length > 0) {
