@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from "react";
+import {DEFAULT_VALUES} from "./config.ts";
 import Timer from "./components/Timer";
 import Templates from "./components/Templates";
 import Settings from "./components/Settings";
@@ -9,17 +10,16 @@ import {TimerMessage} from "./types/TimerMessage.ts";
 /** Default audio alert file — can be changed or removed as needed. */
 const AUDIO_COMPLETE_DEFAULT = "/audio/four.mp3";
 
-const DEFAULT_WORK_DURATION = 40 * 60; // 40 minutes
-const DEFAULT_BREAK_DURATION = 10 * 60; // 10 minutes
-
 const App: React.FC = () => {
-    const [workDuration, setWorkDuration] = useState(DEFAULT_WORK_DURATION);
-    const [breakDuration, setBreakDuration] = useState(DEFAULT_BREAK_DURATION);
-    const [remainingTime, setRemainingTime] = useState(DEFAULT_WORK_DURATION);
-    const [isWorkPhase, setIsWorkPhase] = useState(true);
-    const [timerRunning, setTimerRunning] = useState(false);
-    const [audioComplete, setAudioComplete] = useState<string | null>(null);
-    const [showSettings, setShowSettings] = useState(false);
+    const [workDuration, setWorkDuration] = useState(DEFAULT_VALUES.workDuration);
+    const [breakDuration, setBreakDuration] = useState(DEFAULT_VALUES.breakDuration);
+    const [remainingTime, setRemainingTime] = useState(DEFAULT_VALUES.remainingTime);
+    const [isWorkPhase, setIsWorkPhase] = useState(DEFAULT_VALUES.isWorkPhase);
+    const [timerRunning, setTimerRunning] = useState(DEFAULT_VALUES.timerRunning);
+    const [audioComplete, setAudioComplete] = useState(DEFAULT_VALUES.audioComplete);
+    const [showSettings, setShowSettings] = useState(DEFAULT_VALUES.showSettings);
+    const [loops, setLoops] = useState(DEFAULT_VALUES.loops);
+    const [loopsCurrent, setLoopsCurrent] = useState(DEFAULT_VALUES.loopsCurrent);
 
     // Fetch initial values from chrome.storage.sync
     useEffect(() => {
@@ -41,6 +41,8 @@ const App: React.FC = () => {
                  timerRunning,
                  audioComplete,
                  showSettings,
+                 loops,
+                 loopsCurrent,
              }) => {
                 if (typeof workDuration === "number") setWorkDuration(workDuration);
                 if (typeof breakDuration === "number") setBreakDuration(breakDuration);
@@ -49,6 +51,10 @@ const App: React.FC = () => {
                 if (typeof timerRunning === "boolean") setTimerRunning(timerRunning);
                 if (typeof audioComplete === "string") setAudioComplete(audioComplete);
                 if (typeof showSettings === "boolean") setShowSettings(showSettings);
+                if (typeof showSettings === "boolean") setShowSettings(showSettings);
+                if (typeof showSettings === "boolean") setShowSettings(showSettings);
+                if (typeof loops === "number") setLoops(loops);
+                if (typeof loopsCurrent === "number") setLoopsCurrent(loopsCurrent);
             }
         );
     }, []);
@@ -77,6 +83,12 @@ const App: React.FC = () => {
                             break;
                         case "showSettings":
                             if (typeof newValue === "boolean") setShowSettings(newValue);
+                            break;
+                        case "loops":
+                            if (typeof newValue === "number") setLoops(newValue);
+                            break;
+                        case "loopsCurrent":
+                            if (typeof newValue === "number") setLoopsCurrent(newValue);
                             break;
                         default:
                             console.warn(`Unhandled storage key change: ${key}`);
@@ -139,6 +151,12 @@ const App: React.FC = () => {
                 case "showSettings":
                     setShowSettings(value);
                     break;
+                case "loops":
+                    setLoops(value);
+                    break;
+                case "loopsCurrent":
+                    setLoopsCurrent(value);
+                    break;
                 default:
                     console.warn(`Unrecognized key: ${key}`);
             }
@@ -179,7 +197,6 @@ const App: React.FC = () => {
 
 
     const stopTimer = () => {
-        if (!timerRunning) return;
         updatePersistentValues({timerRunning: false});
         sendMsgToBackground({action: TIMER.STOP, remainingTime, isWorkPhase});
     };
@@ -191,19 +208,18 @@ const App: React.FC = () => {
 
     const resetSettings = () => {
         updatePersistentValues({
-            workDuration: DEFAULT_WORK_DURATION,
-            breakDuration: DEFAULT_BREAK_DURATION,
-            remainingTime: DEFAULT_WORK_DURATION,
-            isWorkPhase: true,
-            timerRunning: false,
-            audioComplete: undefined, // if you still need to clear this in storage
+            workDuration: DEFAULT_VALUES.workDuration,
+            breakDuration: DEFAULT_VALUES.breakDuration,
+            remainingTime: DEFAULT_VALUES.remainingTime,
+            isWorkPhase: DEFAULT_VALUES.isWorkPhase,
+            timerRunning: DEFAULT_VALUES.timerRunning,
+            audioComplete: DEFAULT_VALUES.audioComplete || null, // if you still need to clear this in storage
         });
         sendMsgToBackground({action: TIMER.RESET, DEFAULT_WORK_DURATION, isWorkPhase});
     };
-
     return (
         <div className="container">
-            <h1>Pomodoro Timer</h1>
+            <h1>Pomodoro Timer ({loopsCurrent}/{loops})</h1>
             <Timer
                 isWorkPhase={isWorkPhase}
                 remainingTime={formatTime(remainingTime)}
@@ -227,19 +243,20 @@ const App: React.FC = () => {
             />
 
             <ToggleButton
-                label="Toggle Settings"
+                label="Show Settings"
                 onClick={() => updatePersistentValues({showSettings: !showSettings})}
             />
 
             {showSettings && (
                 <Settings
-                    onSaveSettings={(workTime, breakTime) => {
+                    onSaveSettings={(workTime, breakTime, loopsCount) => {
 
                         if (!timerRunning) {
                             updatePersistentValues({
                                 workDuration: workTime,
                                 breakDuration: breakTime,
                                 remainingTime: workTime,
+                                loops: loopsCount,
                             });
                         }
                     }}

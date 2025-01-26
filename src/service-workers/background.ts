@@ -1,30 +1,6 @@
+import {DEFAULT_VALUES, initializeDefaultValues} from "../config.ts";
 import {TimerMessage} from "../types/TimerMessage.ts";
 import {TIMER} from "../enums/TIMER.ts";
-
-const DEFAULT_VALUES = {
-    workDuration: 40 * 60,
-    breakDuration: 10 * 60,
-    remainingTime: 40 * 60,
-    isWorkPhase: true,
-    timerRunning: false,
-    audioComplete: undefined,
-    showSettings: false,
-};
-
-const initializeDefaultValues = () => {
-    chrome.storage.sync.get(null, (storedValues) => {
-        const valuesToSet = Object.entries(DEFAULT_VALUES).reduce((acc, [key, value]) => {
-            if (!(key in storedValues)) acc[key] = value;
-            return acc;
-        }, {} as Record<string, any>);
-
-        if (Object.keys(valuesToSet).length > 0) {
-            chrome.storage.sync.set(valuesToSet, () => {
-                console.log("Initialized default values:", valuesToSet);
-            });
-        }
-    });
-};
 
 const startTimer = (remainingTime: number, isWorkPhase: boolean) => {
     chrome.alarms.create("alarmGoBrrrr", {periodInMinutes: 1 / 60});
@@ -49,6 +25,7 @@ const stopTimer = () => {
             remainingTime: workDuration,
             isWorkPhase: true,
             timerRunning: false,
+            loopsCurrent: 1
         });
     });
 };
@@ -71,8 +48,8 @@ const resetTimer = () => {
 
 const handleAlarm = () => {
     chrome.storage.sync.get(
-        ["remainingTime", "isWorkPhase", "timerRunning", "workDuration", "breakDuration"],
-        ({remainingTime, isWorkPhase, timerRunning, workDuration, breakDuration}) => {
+        ["remainingTime", "isWorkPhase", "timerRunning", "workDuration", "breakDuration", "loops", "loopsCurrent"],
+        ({remainingTime, isWorkPhase, timerRunning, workDuration, breakDuration, loops, loopsCurrent}) => {
             if (!timerRunning) return;
 
             const newRemainingTime = remainingTime - 1;
@@ -85,14 +62,25 @@ const handleAlarm = () => {
                         timerRunning: true,
                     });
                 } else {
-                    chrome.storage.sync.set({
-                        remainingTime: workDuration,
-                        isWorkPhase: true,
-                        timerRunning: false,
-                    });
-                    chrome.alarms.clear("alarmGoBrrrr", (wasCleared) => {
-                        if (wasCleared) console.log("Break ended, timer stopped.");
-                    });
+                    if (loopsCurrent < loops) {
+                        chrome.storage.sync.set({
+                            remainingTime: workDuration,
+                            isWorkPhase: true,
+                            timerRunning: true,
+                            loopsCurrent: loopsCurrent + 1
+                        });
+                    } else {
+                        // End the session
+                        chrome.storage.sync.set({
+                            remainingTime: workDuration,
+                            isWorkPhase: true,
+                            timerRunning: false,
+                            loopsCurrent: 1
+                        });
+                        chrome.alarms.clear("alarmGoBrrrr", (wasCleared) => {
+                            if (wasCleared) console.log("Break ended, timer stopped.");
+                        });
+                    }
                 }
             } else {
                 chrome.storage.sync.set({remainingTime: newRemainingTime});
@@ -102,7 +90,7 @@ const handleAlarm = () => {
 };
 
 chrome.runtime.onInstalled.addListener(() => {
-    console.log("Extension installed.");
+    console.log("Extension installed!");
     initializeDefaultValues();
 });
 
