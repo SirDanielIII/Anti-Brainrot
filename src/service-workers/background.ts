@@ -15,8 +15,6 @@ chrome.runtime.onInstalled.addListener(() => {
         isWorkPhase: true, // Default phase is work
         timerRunning: true,
         alarmFinished: undefined,
-        alarmDistraction: undefined,
-        alarmDistractionPrompt: undefined,
         showSettings: false
     };
 

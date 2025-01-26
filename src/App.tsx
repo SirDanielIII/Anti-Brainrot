@@ -8,6 +8,8 @@ import {TimerMessage} from "./types/TimerMessage.ts";
 
 /** Default audio alert file — can be changed or removed as needed. */
 const audioCompleteDefault = "/audio/four.mp3";
+const audioDistracted = null;
+const audioDistractedPrompt = null;
 let stateSetters: {
     workDuration: React.Dispatch<React.SetStateAction<number>>;
     breakDuration: React.Dispatch<React.SetStateAction<number>>;
@@ -27,8 +29,6 @@ const App: React.FC = () => {
     const [isWorkPhase, setIsWorkPhase] = useState(true); // true (work phase)
     const [timerRunning, setTimerRunning] = useState(false); // false (timer is not running)
     const [audioComplete, setAudioComplete] = useState<string | null>(null); // path to sound file
-    const [audioDistracted, setAudioDistracted] = useState<string | null>(null); // path to sound file
-    const [audioDistractedPrompt, setAudioDistractedPrompt] = useState<string | null>(null); // path to sound file
     const [showSettings, setShowSettings] = useState(false); // false (hide settings menu by default)
 
     // Fetch initial values from chrome.storage.sync
@@ -42,8 +42,6 @@ const App: React.FC = () => {
                 "isWorkPhase",
                 "timerRunning",
                 "audioComplete",
-                "audioDistracted",
-                "audioDistractedPrompt",
                 "showSettings",
             ],
             (values) => {
@@ -53,8 +51,6 @@ const App: React.FC = () => {
                 if (values.isWorkPhase !== undefined) setIsWorkPhase(values.isWorkPhase);
                 if (values.timerRunning) setTimerRunning(values.timerRunning);
                 if (values.audioComplete) setAudioComplete(values.audioComplete);
-                if (values.audioDistracted) setAudioDistracted(values.audioDistracted);
-                if (values.audioDistractedPrompt) setAudioDistractedPrompt(values.audioDistractedPrompt);
                 if (values.showSettings) setShowSettings(values.showSettings);
             }
         );
@@ -67,8 +63,6 @@ const App: React.FC = () => {
             isWorkPhase: setIsWorkPhase,
             timerRunning: setTimerRunning,
             audioComplete: setAudioComplete,
-            audioDistracted: setAudioDistracted,
-            audioDistractedPrompt: setAudioDistractedPrompt,
             showSettings: setShowSettings,
         };
         return;
@@ -149,8 +143,6 @@ const App: React.FC = () => {
             isWorkPhase: true,
             timerRunning: true,
             alarmFinished: undefined,
-            alarmDistraction: undefined,
-            alarmDistractionPrompt: undefined,
             showSettings: false
         });
         sendMsgToBackground({
