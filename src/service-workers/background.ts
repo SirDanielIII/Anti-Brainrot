@@ -49,12 +49,12 @@ chrome.runtime.onMessage.addListener(
             case TIMER.START:
                 console.log("Timer started:", request.remainingTime, request.isWorkPhase);
                 // Create an alarm that fires every 5 seconds
-                chrome.alarms.create("fiveSecondAlarm", {
+                chrome.alarms.create("alarmGoBrrrr", {
                     periodInMinutes: 1 / 60, // Convert 5 seconds to minutes
                 });
                 break;
             case TIMER.RESET:
-                chrome.alarms.clear("fiveSecondAlarm", (wasCleared) => {
+                chrome.alarms.clear("alarmGoBrrrr", (wasCleared) => {
                     if (wasCleared) {
                         console.log("Alarm stopped!");
                     } else {
@@ -69,7 +69,7 @@ chrome.runtime.onMessage.addListener(
 );
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "fiveSecondAlarm") {
+    if (alarm.name === "alarmGoBrrrr") {
         chrome.storage.sync.get(
             ["remainingTime", "isWorkPhase", "timerRunning", "workDuration", "breakDuration"],
             (storedValues) => {
@@ -90,7 +90,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                                 isWorkPhase: true,
                                 timerRunning: false,
                             });
-                            chrome.alarms.clear("fiveSecondAlarm", (wasCleared) => {
+                            chrome.alarms.clear("alarmGoBrrrr", (wasCleared) => {
                                 if (wasCleared) {
                                     console.log("Alarm stopped!");
                                 } else {
@@ -98,7 +98,13 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                                 }
                             });
                         }
+                        // *********************************************************************
+                        // RUN ANY LOGIC THAT NEEDS TO BE RAN DURING THE 1 SEC ALARM LOOP HERE
+                        // *********************************************************************
+
+
                     } else {
+                        // Send updated values to App.tsx
                         chrome.storage.sync.set({remainingTime: newRemainingTime, isWorkPhase: isWorkPhase});
                         // Handle message errors gracefully
                         chrome.runtime.sendMessage(
