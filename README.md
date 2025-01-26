@@ -2,6 +2,9 @@
 
 We slaved ourselves for 36h to help you to **LOCK THE F*CK IN** (with our beautifuly made Chrome extension).
 
+This was developed in conjunction to [Pomolock-in_Website](https://github.com/RakOnTrack/Pomolock-in_Website) in order to create one great Pomodoro experience that everybody can
+use and enjoy.
+
 ---
 
 ## How to Contribute
