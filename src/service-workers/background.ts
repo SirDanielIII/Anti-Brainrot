@@ -11,10 +11,10 @@ chrome.runtime.onInstalled.addListener(() => {
     const defaultValues = {
         workDuration: 40 * 60, // 40 minutes in seconds
         breakDuration: 10 * 60, // 10 minutes in seconds
-        remainingTime: "40:00", // Initial time as a string
+        remainingTime: 40 * 60, // Initial time as a string
         isWorkPhase: true, // Default phase is work
-        timerRunning: true,
-        alarmFinished: undefined,
+        timerRunning: false,
+        audioComplete: undefined,
         showSettings: false
     };
 
@@ -44,22 +44,79 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener(
     function (request: TimerMessage, _sender, sendResponse) {
         console.log("Message received in background:", request);
-
+        console.log(request);
         switch (request.action) {
             case TIMER.START:
                 console.log("Timer started:", request.remainingTime, request.isWorkPhase);
-                break;
-            case TIMER.PAUSE:
-                console.log("Timer paused:", request.remainingTime, request.isWorkPhase);
+                // Create an alarm that fires every 5 seconds
+                chrome.alarms.create("fiveSecondAlarm", {
+                    periodInMinutes: 1 / 60, // Convert 5 seconds to minutes
+                });
                 break;
             case TIMER.RESET:
-                console.log("Timer reset:", request.remainingTime, request.isWorkPhase);
-                break;
-            default:
-                console.warn("Unknown action from request");
+                chrome.alarms.clear("fiveSecondAlarm", (wasCleared) => {
+                    if (wasCleared) {
+                        console.log("Alarm stopped!");
+                    } else {
+                        console.log("Failed to stop the alarm");
+                    }
+                });
         }
 
         sendResponse({status: "success"});
         return true;
     }
 );
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === "fiveSecondAlarm") {
+        chrome.storage.sync.get(
+            ["remainingTime", "isWorkPhase", "timerRunning", "workDuration", "breakDuration"],
+            (storedValues) => {
+                const {remainingTime, isWorkPhase, timerRunning, workDuration, breakDuration} = storedValues;
+
+                if (timerRunning) {
+                    const newRemainingTime = remainingTime - 1;
+                    if (newRemainingTime < 0) {
+                        if (isWorkPhase) {
+                            chrome.storage.sync.set({
+                                remainingTime: breakDuration,
+                                isWorkPhase: false,
+                                timerRunning: true,
+                            });
+                        } else {
+                            chrome.storage.sync.set({
+                                remainingTime: workDuration,
+                                isWorkPhase: true,
+                                timerRunning: false,
+                            });
+                            chrome.alarms.clear("fiveSecondAlarm", (wasCleared) => {
+                                if (wasCleared) {
+                                    console.log("Alarm stopped!");
+                                } else {
+                                    console.log("Failed to stop the alarm");
+                                }
+                            });
+                        }
+                    } else {
+                        chrome.storage.sync.set({remainingTime: newRemainingTime, isWorkPhase: isWorkPhase});
+                        // Handle message errors gracefully
+                        chrome.runtime.sendMessage(
+                            {action: "UPDATE_REMAINING_TIME", newRemainingTime, isWorkPhase},
+                            (response) => {
+                                if (chrome.runtime.lastError) {
+                                    console.warn(
+                                        "No active listeners to receive message:",
+                                        chrome.runtime.lastError.message
+                                    );
+                                } else {
+                                    console.log("Message sent successfully:", response);
+                                }
+                            }
+                        );
+                    }
+                }
+            }
+        );
+    }
+});

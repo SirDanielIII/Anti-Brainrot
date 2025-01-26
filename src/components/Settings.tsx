@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// Settings.tsx
+import React, {useState} from "react";
 import Button from "./Button";
 
 interface SettingsProps {
@@ -15,8 +16,8 @@ const Settings: React.FC<SettingsProps> = ({ onSaveSettings, onAudioUpload }) =>
         onSaveSettings(workInput * 60, breakInput * 60);
     };
 
-    const handleAudioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
+    const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
         if (file) {
             const audioUrl = URL.createObjectURL(file);
             console.log("Uploading audio:", audioUrl);
@@ -32,9 +33,7 @@ const Settings: React.FC<SettingsProps> = ({ onSaveSettings, onAudioUpload }) =>
                 <input
                     type="number"
                     value={workInput}
-                    onChange={(e) => {
-                        setWorkInput(Number(e.target.value));
-                    }}
+                    onChange={(e) => setWorkInput(Number(e.target.value))}
                 />
             </label>
             <br />
@@ -43,9 +42,7 @@ const Settings: React.FC<SettingsProps> = ({ onSaveSettings, onAudioUpload }) =>
                 <input
                     type="number"
                     value={breakInput}
-                    onChange={(e) => {
-                        setBreakInput(Number(e.target.value));
-                    }}
+                    onChange={(e) => setBreakInput(Number(e.target.value))}
                 />
             </label>
             <br />
